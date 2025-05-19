@@ -1,23 +1,43 @@
 import cv2
+import pytesseract
 
-cap = cv2.VideoCapture(3)
-cap.set(3, 640)
-cap.set(4, 480)
+class Cam:
+    def __init__(self, cap):
+        self.cap = cap
 
-if not cap.isOpened():
-    print("cannot open camera")
-    exit()
+    def read_cam(self):
+        ret, frame = cap.read()
+        if not ret:
+            print("can't receive frame. exiting...")
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("can't receive frame. exiting...")
-        break
+        if cv2.waitKey(1) == ord('q'):
+            self.cap.release()
+            cv2.destroyAllWindows()
+            exit()
 
-    cv2.imshow('Camera', frame)
+        return frame
 
-    if cv2.waitKey(1) == ord('q'):
-        break
+    def show_cam(self, frame):
+        cv2.imshow('Camera', frame)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        return gray
 
-cap.release()
-cv2.destroyAllWindows()
+    def read_text(self, gray):
+        text = pytesseract.image_to_string(gray)
+        print(text)
+
+
+if __name__ == "__main__":
+    cap = cv2.VideoCapture(3)
+    cap.set(3, 640)
+    cap.set(4, 480)
+
+    if not cap.isOpened():
+        print("cannot open camera")
+        exit()
+
+    cam = Cam(cap)
+    while True:
+        frame = cam.read_cam()
+        gray = cam.show_cam(frame)
+        cam.read_text(gray)
