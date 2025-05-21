@@ -46,6 +46,7 @@ def extract_and_warp_u_shape():
     for point in approx_contour:
         x, y = point[0]
         points[i] = [x, y]
+        cv2.circle(image, (x, y), 3, (255, 0, 0), -1)
         i += 1
         if i >= 4:
             break
@@ -53,6 +54,8 @@ def extract_and_warp_u_shape():
     # If we didn't get 4 points, return None
     if i < 4:
         return None
+
+    cv2.imshow('indicator', image)
 
     # Perform perspective transform
     pts1 = np.float32(points)
