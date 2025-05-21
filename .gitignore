@@ -1,3 +1,4 @@
-samples
 captured_images
 test.py
+__pycache__
+sample/*
