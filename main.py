@@ -2,7 +2,67 @@ import cv2
 import numpy as np
 from datetime import datetime
 import os
-from platform import release
+import pytesseract
+import time
+
+def preprocess_display_for_ocr(display):
+    """Preprocess the display image for better OCR results"""
+    if display is None:
+        return None
+
+    # Resize for better OCR
+    display = cv2.resize(display, (display.shape[1] * 2, display.shape[0] * 2))
+
+    # Convert to grayscale
+    gray = cv2.cvtColor(display, cv2.COLOR_BGR2GRAY)
+
+    # Apply threshold to isolate digits
+    _, thresh = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
+
+    # Apply some noise reduction
+    kernel = np.ones((2, 2), np.uint8)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    return thresh
+
+def read_display(preprocessed_img):
+    """Read text from preprocessed display image"""
+    if preprocessed_img is None:
+        return None
+
+    # Configure Tesseract for digits
+    custom_config = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789.mVACFΩ'
+
+    # Read display text
+    text = pytesseract.image_to_string(preprocessed_img, config=custom_config)
+
+    # Clean up the text
+    text = text.strip()
+
+    return text
+
+def extract_measurement(text):
+    """Extract numerical measurement and unit from OCR text"""
+    if not text:
+        return None, None
+
+    # Remove any unwanted characters
+    cleaned = ''.join(c for c in text if c.isdigit() or c in '.-mVACFΩ')
+
+    # Extract number and unit
+    number = ''
+    unit = ''
+    for c in cleaned:
+        if c.isdigit() or c in '.-':
+            number += c
+        else:
+            unit += c
+
+    try:
+        value = float(number)
+        return value, unit
+    except ValueError:
+        return None, None
 
 def extract_and_warp_u_shape():
     image = cv2.imread('sample/image.jpg')
@@ -86,6 +146,11 @@ if __name__ == "__main__":
     while cap.isOpened:
         cam.read_cam()
         result = extract_and_warp_u_shape()
+        prep = preprocess_display_for_ocr(result)
+        text = read_display(prep)
+        value, unit = extract_measurement(text)
+
+        print(value, " ", unit)
 
         cv2.imshow('Original Image', cv2.imread('sample/image.jpg'))
 
@@ -93,6 +158,8 @@ if __name__ == "__main__":
             cv2.imshow('Warped U-Shape', result)
         if cv2.waitKey(1) == ord('q'):
             break
+
+        time.sleep(0.5)
 
     cap.release()
     cv2.destroyAllWindows()
