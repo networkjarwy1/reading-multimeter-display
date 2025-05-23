@@ -106,6 +106,7 @@ class Cam:
     def __init__(self, cap):
         self.cap = cap
         os.makedirs("captured_images", exist_ok=True)
+        os.makedirs("results", exist_ok=True)
 
 
     def get_multimeter_zoom(self):
