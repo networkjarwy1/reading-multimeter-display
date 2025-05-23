@@ -6,6 +6,19 @@ import pytesseract
 import time
 import sys
 
+possible_units = ['mV', 'V', 'kV', 'MV', 'mA', 'A', 'mΩ', 'Ω', 'kΩ', 'MΩ', 'm Hz', 'Hz', 'k Hz', 'M Hz', 'C', 'F', '.']
+show_without_unit = True
+
+filename = datetime.now().strftime("%H:%M:%S_%d.%m.%Y")
+txtfile = open(f"results/{filename}.txt", 'w')
+
+def check_unit(unit):
+    for i in possible_units:
+        if unit == i:
+            return unit
+
+    return None     # in case it doesn't match any possible unit
+
 def find_red_u_shape(frame, min_area=5_000):
     """Najde červený U-shape v obraze a vrátí jeho bounding rectangle"""
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -36,13 +49,14 @@ def preprocess_display_for_ocr(display):
     # Resize for better OCR
     display = cv2.resize(display, (display.shape[1] * 2, display.shape[0] * 2))
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(display, cv2.COLOR_BGR2GRAY)
+    unblured = cv2.medianBlur(display, 5)
+    gray = cv2.cvtColor(unblured, cv2.COLOR_BGR2GRAY)
+    #bandw = exposure.rescale_intensity(gray, out_range= (0,255))
 
     # Create black/white image - everything that is black stays black, rest becomes white
     # First invert so black becomes white, then threshold to make it pure black/white
-    _, thresh = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
-    
+    _ret, thresh = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+
     # Apply some noise reduction
     kernel = np.ones((2, 2), np.uint8)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
@@ -89,25 +103,10 @@ def extract_measurement(text):
         return None, None
 
 class Cam:
-    def __init__(self, cap, templates):
+    def __init__(self, cap):
         self.cap = cap
         os.makedirs("captured_images", exist_ok=True)
-        os.makedirs("samples", exist_ok=True)
 
-        for root, dirs, files in os.walk("templates/"):
-            for f in files:
-                if not f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
-                    continue                         # vynechat ne-obrázky (.DS_Store apod.)
-                templates.append(f)
-                print(f"importing {f}")
-
-        self.template_files = sorted(templates)
-        print(self.template_files)
-
-        self.template_imgs = [
-            cv2.imread(os.path.join("templates", f), cv2.IMREAD_GRAYSCALE)
-            for f in self.template_files
-        ]
 
     def get_multimeter_zoom(self):
         """Získá zoom na displej multimetru pomocí detekce červeného U-shape"""
@@ -136,66 +135,16 @@ class Cam:
         )
         return zoom
 
-    def save_frames(self, frame, median, gray):
-        frame_files = ["frame.jpg", "median.jpg", "gray.jpg"]
-        cv2.imwrite(os.path.join("samples", frame_files[0]), frame)
-        cv2.imwrite(os.path.join("samples", frame_files[1]), median)
-        cv2.imwrite(os.path.join("samples", frame_files[2]), gray)
-
-    def match_frames(self):
-        frame_files = ["frame.jpg", "median.jpg", "gray.jpg"]
-        samples = [
-            cv2.imread(os.path.join("samples", f), cv2.IMREAD_GRAYSCALE)
-            for f in frame_files
-        ]
-
-        for i in range(3):
-            img = samples[i]
-            if img is None:
-                continue
-
-            matched_templates = []
-            any_match = False
-
-            for template, tname in zip(self.template_imgs, self.template_files):
-                if template is None:
-                    continue
-
-                # přeskočit, pokud je šablona větší než vzorek
-                if img.shape[0] < template.shape[0] or img.shape[1] < template.shape[1]:
-                    continue
-
-                res = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-                loc = np.where(res >= 0.8)
-
-                if loc[0].size:
-                    any_match = True
-                    matched_templates.append(tname)
-                    w, h = template.shape[::-1]
-                    for pt in zip(*loc[::-1]):
-                        cv2.rectangle(img, pt, (pt[0] + w, pt[1] + h), 0, 2)
-
-            if any_match:
-                print(f"{frame_files[i]} → match: {', '.join(matched_templates)}")
-                cv2.imwrite(
-                    os.path.join(
-                        "captured_images",
-                        f"res_{i}_{datetime.now().strftime('%H-%M-%S')}.jpg",
-                    ),
-                    img,
-                )
-
 
 # ---------- main ----------
 if __name__ == "__main__":
-    cap = cv2.VideoCapture(0)  # Změněno z 2 na 0
-    templates = []
+    cap = cv2.VideoCapture(2)  # Změněno z 2 na 0
 
     if not cap.isOpened():
         print("cannot open camera")
         sys.exit()
 
-    cam = Cam(cap, templates)
+    cam = Cam(cap)
 
     while cap.isOpened():
         # Získání zoom obrazu z multimetru
@@ -209,19 +158,26 @@ if __name__ == "__main__":
         median = cv2.medianBlur(zoom, 5)
         gray   = cv2.cvtColor(median, cv2.COLOR_BGR2GRAY)
 
-        cam.save_frames(zoom, median, gray)
-        cam.match_frames()
-
         # OCR zpracování - black/white konverze a čtení číslic
         bw_image = preprocess_display_for_ocr(zoom)
         if bw_image is not None:
             cv2.imshow('Black/White', bw_image)
-            
+
             text = read_display(bw_image)
             value, unit = extract_measurement(text)
-            
+
+
             if value is not None:
-                print(f"Hodnota: {value} {unit}")
+                unit = check_unit(unit)
+                print(unit)
+
+                if show_without_unit is True or show_without_unit is False and unit is not None:
+                    now = datetime.now()
+                    now = now.strftime("%H:%M:%S_%d.%m.%Y")
+                    result = f"Value: {value} {unit}     Time: {now}"
+                    print(result)
+                    cv2.imwrite(f"captured_images/{now}.jpg", zoom)
+                    txtfile.write(f'{result}\n')
 
         if cv2.waitKey(1) == ord('q'):
             break
