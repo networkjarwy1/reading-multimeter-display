@@ -5,14 +5,19 @@ import os
 import pytesseract
 import time
 import sys
+import getopt
+
+argumentList = sys.argv[1:]
+options = "uwhc:"
+long_options = ["unit", "without_unit", "help", "camera"]
+
 
 possible_units = ['mV', 'V', 'kV', 'MV', 'mA', 'A', 'mΩ', 'Ω', 'kΩ', 'MΩ', 'm Hz', 'Hz', 'k Hz', 'M Hz', 'C', 'F', '.']
 show_without_unit = True
 
-filename = datetime.now().strftime("%H:%M:%S_%d.%m.%Y")
-txtfile = open(f"results/{filename}.txt", 'w')
 
 def check_unit(unit):
+    """filtres out impossible units"""
     for i in possible_units:
         if unit == i:
             return unit
@@ -131,21 +136,58 @@ class Cam:
             zoom = None
 
         cv2.imshow("Kamera", frame)
-        cv2.imshow(
-            "Zoom", zoom if zoom is not None else np.zeros((300, 600, 3), np.uint8)
-        )
+        cv2.imshow("Zoom", zoom if zoom is not None else np.zeros((300, 600, 3), np.uint8))
+
         return zoom
 
 
 # ---------- main ----------
 if __name__ == "__main__":
-    cap = cv2.VideoCapture(2)  # Změněno z 2 na 0
+    cap = cv2.VideoCapture(0)
+
+    try:
+        arguments, values = getopt.getopt(argumentList, options, long_options)
+
+        for currentArgument, currentValue in arguments:
+
+            if currentArgument in ("-u", "--unit"):
+                print("Displaying only results with units")
+                show_without_unit = False
+
+            elif currentArgument in ("-w", "--without_units"):
+                print("Displaying results even without units")
+
+            elif currentArgument in ("-h", "--help"):
+                print("-h   --help                      displays this output \
+                     \n-w   --without_units             displays results even without units (default)\
+                     \n-u   --unit                      displays result only with readable units\
+                     \n-c   --camera <camera number>    choosing camera (default 0)")
+
+                exit()
+
+            elif currentArgument in ("-c", "--camera"):
+                        try:
+                            print(f"trying to open camera {currentValue}")
+                            cap = cv2.VideoCapture(int(currentValue))
+                            if not cap.isOpened():
+                                cap = cv2.VideoCapture(0)
+
+                        except:
+                            cap = cv2.VideoCapture(0)
+                            print("value must be integer, using default camera (0)")
+
+
+    except getopt.error as err:
+        exit(str(err))
 
     if not cap.isOpened():
         print("cannot open camera")
         sys.exit()
 
     cam = Cam(cap)
+
+    filename = datetime.now().strftime("%H:%M:%S_%d.%m.%Y")
+    txtfile = open(f"results/{filename}.txt", 'w')
 
     while cap.isOpened():
         # Získání zoom obrazu z multimetru
