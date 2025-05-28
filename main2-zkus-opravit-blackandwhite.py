@@ -54,7 +54,7 @@ def preprocess_display_for_ocr(display):
     # Resize for better OCR
     display = cv2.resize(display, (display.shape[1] * 2, display.shape[0] * 2))
 
-    unblured = cv2.medianBlur(display, 5)
+    unblured = cv2.GaussianBlur(display,(5,5),0)
     gray = cv2.cvtColor(unblured, cv2.COLOR_BGR2GRAY)
     #bandw = exposure.rescale_intensity(gray, out_range= (0,255))
 
