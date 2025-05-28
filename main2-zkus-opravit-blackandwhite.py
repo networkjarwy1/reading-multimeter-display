@@ -60,11 +60,11 @@ def preprocess_display_for_ocr(display):
 
     # Create black/white image - everything that is black stays black, rest becomes white
     # First invert so black becomes white, then threshold to make it pure black/white
-    _ret, thresh = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+    _ret, thresh = cv2.threshold(gray, 135, 255, cv2.THRESH_BINARY)
 
     # Apply some noise reduction
     kernel = np.ones((2, 2), np.uint8)
-    trash = cv2.GaussianBlur(display,(5,5),0)
+    thresh = cv2.GaussianBlur(display,(5,5),0)
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
     return thresh
@@ -75,10 +75,10 @@ def read_display(preprocessed_img):
         return None
 
     # Configure Tesseract for digits
-    custom_config = r'--oem 3 --psm 7 -c tessedit_char_whitelist=0123456789.mVACFΩ'
+    custom_config = "-psm 100 -c tessedit_char_whitelist=.0123456789mVACFΩ"
 
     # Read display text
-    text = pytesseract.image_to_string(preprocessed_img, config=custom_config)
+    text = pytesseract.image_to_string(preprocessed_img , lang="letsgodigital", config=custom_config)
 
     # Clean up the text
     text = text.strip()
