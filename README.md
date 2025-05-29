@@ -45,4 +45,8 @@ python3 OCR.py -h # help
 # -w   --without_units             displays results even without units (default)
 # -u   --unit                      displays result only with readable units
 # -c   --camera <camera number>    choosing camera (default 0)
+
+# start
+
+python3 OCR.py # add -u if you want only results with units, -c <number> for camera change
 ```
