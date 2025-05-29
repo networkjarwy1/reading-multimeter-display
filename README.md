@@ -67,7 +67,7 @@ python3 OCR.py # add -u if you want only results with units, -c <number> for cam
 #### 0-1kΩ potentiometer or trimmer
 #### 240Ω resistor
 #### 5V power supply (minumim 100mA)
-[3D model](cam_holder/cam_holder.stl)
+[print this 3D model](cam_holder/cam_holder.stl)
 ![3D moderl preview](pictures/cam_holder.png)
 
 ## wiring
