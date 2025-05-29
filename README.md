@@ -28,6 +28,7 @@ python -m ensurepip --upgrade
 python3 -m ensurepip
 ```
 
+### installation
 ```bash
 pip install opencv-python pytesseract numpy
 ```
