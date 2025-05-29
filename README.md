@@ -1,7 +1,11 @@
 # python software for reading multimeter display
+#### This program captures video from a camera, detects a red U-shaped pattern (used to locate the multimeter display), and then processes that region to perform optical character recognition (OCR). It preprocesses the image—resizing, grayscale conversion, and thresholding—to improve OCR accuracy and extracts numerical values and their units from the display. The script also accepts command-line arguments to select the camera, control whether results with units are displayed, and show help information. Finally, it logs the extracted measurement along with a timestamp into a text file and saves snapshots of the display.
+
 ## dependencies
 #### pytesseract, opencv, numpy
+
 ## dependency installation
+
 ### linux
 
 #### arch linux
