@@ -10,12 +10,12 @@ source=(OCR.py)
 sha256sums=('SKIP')
 
 build() {
-  cd "$srcdir/$pkgname"
+  cd "$srcdir"
   # No build process needed
 }
 
 package() {
-  cd "$srcdir/$pkgname"
+  cd "$srcdir"
 
   # Create destination directory
   install -Dm755 OCR.py "$pkgdir/usr/bin/multimeter-ocr"
