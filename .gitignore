@@ -1,3 +1,5 @@
 /captured_images/
 /results/
 /.idea/
+/__pycache__/
+/.ropeproject/
