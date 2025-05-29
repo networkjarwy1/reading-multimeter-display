@@ -33,7 +33,7 @@ python3 -m ensurepip
 pip install opencv-python pytesseract numpy
 ```
 
-## start
+## usage
 ```bash
 python3 OCR.py -h # help
 
@@ -50,3 +50,21 @@ python3 OCR.py -h # help
 
 python3 OCR.py # add -u if you want only results with units, -c <number> for camera change
 ```
+
+## support for fish [(friendly interactive shell)](https://fishshell.com/)
+```bash
+./clear.fish # clears captured_images and results (deletes those files)
+```
+
+## 3D model of cam holder
+### for complete project you need
+#### [logitech c920 camera](https://www.logitech.com/en-eu/shop/p/c920-pro-hd-webcam.960-001055)
+#### 5x 5mm white LED
+#### 0-1kΩ potentiometer or trimmer
+#### 240Ω resistor
+#### 5V power supply (minumim 100mA)
+[3D model](cam_holder/cam_holder.stl)
+[3D moderl preview](pictures/cam_holder.png)
+
+## wiring
+[circuit diagram](pictures/circuit_diagram.png)
