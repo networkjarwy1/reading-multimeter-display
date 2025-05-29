@@ -10,7 +10,8 @@
 
 #### arch linux
 ```bash
-sudo pacman -S python-pip
+cd reading-multimeter-display
+makepkg -si
 ```
 
 #### debian/ubuntu
