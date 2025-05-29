@@ -10,5 +10,5 @@
 
 ## What We Tried and Used:
 
-	•	3D-printed enclosure and camera mount (see README for details)
+	•	3D-printed enclosure and camera mount (see [README](README.md) for details)
 	•	Backlight on the multimeter, activated via the yellow button
